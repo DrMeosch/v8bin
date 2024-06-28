@@ -1,0 +1,83 @@
+name: V8 Release and Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build V8
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-13, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          clean: true
+          fetch-depth: 1
+
+      - name: Initialize Archive Name
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ./.github/workflows/scripts/archive-name.sh
+
+      - name: Initialize Archive Name (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\.github\workflows\scripts\archive-name.ps1
+
+      - name: Build Release for Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        uses: ./.github/actions/build-linux
+        with:
+          archive-name: ${{ env.ARCHIVE_NAME }}
+
+      - name: Build Release for macOS (${{ runner.arch }})
+        if: startsWith(matrix.os, 'macos')
+        uses: ./.github/actions/build-macos
+        with:
+          archive-name: ${{ env.ARCHIVE_NAME }}
+
+      - name: Build Release for Windows
+        if: startsWith(matrix.os, 'windows')
+        uses: ./.github/actions/build-windows
+        with:
+          archive-name: ${{ env.ARCHIVE_NAME }}
+
+      - name: Upload Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARCHIVE_NAME }}
+          path: |
+            *.tar.xz
+            *.7z
+          retention-days: 7
+
+  # release:
+  #   runs-on: ubuntu-latest
+  #   if: ${{ always() }}
+  #   needs: build
+  #   steps:
+  #     - name: Download Archives
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         path: artifact
+
+  #     - name: Display Downloads
+  #       run: ls -lhR artifact
+
+  #     - name: Upload Archive
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         tag_name: ${{ github.ref }}
+  #         name: Release ${{ github.ref_name }}
+  #         draft: false
+  #         prerelease: false
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         files: |
+  #           artifact/**/*.tar.xz
+  #           artifact/**/*.7z

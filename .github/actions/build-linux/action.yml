@@ -1,0 +1,59 @@
+name: Build for Linux
+description: 'Build V8 for Linux'
+
+inputs:
+  archive-name:
+    description: 'Base name of the archive to create'
+    default: v8_Linux
+    required: false
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    - name: Restore CCache
+      uses: actions/cache@v4
+      with:
+        path: .ccache
+        key: ${{ runner.os }}-${{ runner.arch }}:libv8:ccache:${{ github.run_number }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}:libv8:ccache:
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.8' # https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/refs/heads/main/README.md
+
+    - name: Setup Build Tools
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -yq ccache
+        sudo update-ccache-symlinks
+
+        echo "/usr/lib/ccache" >> "$GITHUB_PATH"
+
+        ccacheDir="${GITHUB_WORKSPACE}/.ccache"
+        test -d "$ccacheDir" || mkdir "$ccacheDir"
+
+        echo "CCACHE_DIR=$ccacheDir" >> "$GITHUB_ENV"
+
+    - name: Download V8 Source
+      shell: bash
+      run: ./v8_download.sh
+
+    - name: Compile V8
+      shell: bash
+      run: ./v8_compile.sh
+
+    - name: Show CCache Status
+      shell: bash
+      run: ccache -s
+
+    - name: Test V8
+      shell: bash
+      run: ./v8_test.sh
+
+    - name: Archive Release
+      shell: bash
+      run: ./archive.sh ${{ inputs.archive-name }}
