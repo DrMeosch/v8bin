@@ -54,9 +54,9 @@ mkdir "$output_dir" || true
 #   "${dir}/gn-args_${os}.txt" \
 #   "$output_dir"
 
-rm -rf "${dir}/v8/out/release/gen"
-rm -rf "${dir}/v8/out/release/obj"
 cp -vr "${dir}/v8/out/release" "$output_dir"
+rm -rf "${output_dir}/gen"
+rm -rf "${output_dir}/obj"
 
 tar -Jcf "${dir}/${archive}" -C "$output_dir" .
 

@@ -39,9 +39,10 @@ if "%archiveName%"=="" (
 if not exist "%outputDir%" (
   mkdir "%outputDir%"
 )
-rmdir "%dir%\v8\out\release\gen" /s /q
-rmdir "%dir%\v8\out\release\obj" /s /q
+
 xcopy "%dir%\v8\out\release" "%outputDir%" /s /e /y
+rmdir "%outputDir%\gen" /s /q
+rmdir "%outputDir%\obj" /s /q
 
 where 7z >nul 2>nul
 if errorlevel 1 (
