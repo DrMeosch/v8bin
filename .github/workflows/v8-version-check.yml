@@ -1,0 +1,49 @@
+name: V8 Version Check
+
+on:
+  schedule:
+    - cron: "0 1 * * *" # every day at UTC 1:00AM
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check V8 Version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+
+      - name: Get Lastest Stable Version
+        shell: bash
+        run: |
+          current_v8_version="$(head -n1 VERSION | cut -d'-' -f1)"
+
+          latest_chromium_version="$(wget -qO- "https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Linux&num=1" | jq -r '.[0].version')"
+          latest_v8_version="$(wget -qO- "https://chromiumdash.appspot.com/fetch_version?version=$latest_chromium_version" | jq -r '.v8_version')"
+
+          echo "Current version: $current_v8_version"
+          echo "Latest version: $latest_v8_version"
+
+          if [ -n "$latest_v8_version" ] && [ x"$latest_v8_version" != x"$current_v8_version" ] ; then
+            echo "NEW_V8_VERSION=$latest_v8_version" >> $GITHUB_ENV
+          else
+            echo "NEW_V8_VERSION=0" >> $GITHUB_ENV
+          fi
+
+      - name: Make Commit
+        if: env.NEW_V8_VERSION != '0'
+        shell: bash
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
+          echo "${{ env.NEW_V8_VERSION }}" > VERSION
+
+          git add -f VERSION
+          git commit -am "chore(v8): bump to v${{ env.NEW_V8_VERSION }}"
+          git push origin master
+
+          git tag -a "v${{ env.NEW_V8_VERSION }}" -m "v${{ env.NEW_V8_VERSION }}"
+          git push --tags

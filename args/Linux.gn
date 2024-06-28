@@ -1,0 +1,4 @@
+is_component_build=true
+is_debug=true
+v8_enable_backtrace=true
+v8_enable_slow_dchecks=true
