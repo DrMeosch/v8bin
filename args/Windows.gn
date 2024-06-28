@@ -2,4 +2,5 @@ is_component_build=true
 is_debug=true
 symbol_level=2
 v8_enable_backtrace=true
+v8_enable_sandbox=true
 v8_enable_slow_dchecks=true
