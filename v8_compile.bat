@@ -17,6 +17,14 @@ if not exist "%depotToolsDir%" (
 )
 
 set "Path=%depotToolsDir%;%Path%"
+
+rem Newer depot_tools wrappers need the bundled Python that win_tools.bat installs;
+rem v8\third_party\depot_tools is a separate checkout that is never bootstrapped.
+if not exist "%depotToolsDir%\python3_bin_reldir.txt" (
+  call "%depotToolsDir%\bootstrap\win_tools.bat"
+  if errorlevel 1 exit /b %errorlevel%
+)
+
 set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
 
 set "os=%RUNNER_OS%"
