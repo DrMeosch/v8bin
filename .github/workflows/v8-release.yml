@@ -59,7 +59,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    if: ${{ always() }}
+    if: ${{ needs.build.result == 'success' }}
     needs: build
     steps:
       - name: Download Archives

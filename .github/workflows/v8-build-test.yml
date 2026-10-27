@@ -6,7 +6,12 @@ on:
       - master
       - actions
     paths-ignore:
-      - "depot_tools"
+      - ".gitignore"
+      - ".gitpod*"
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
       - ".gitignore"
       - ".gitpod*"
 
