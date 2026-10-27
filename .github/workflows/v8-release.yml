@@ -10,7 +10,7 @@ jobs:
     name: Build V8
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-13, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-15-intel, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Code
@@ -59,7 +59,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    if: ${{ always() }}
+    if: ${{ needs.build.result == 'success' }}
     needs: build
     steps:
       - name: Download Archives

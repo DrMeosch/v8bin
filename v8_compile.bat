@@ -17,6 +17,14 @@ if not exist "%depotToolsDir%" (
 )
 
 set "Path=%depotToolsDir%;%Path%"
+
+rem Newer depot_tools wrappers need the bundled Python that win_tools.bat installs;
+rem v8\third_party\depot_tools is a separate checkout that is never bootstrapped.
+if not exist "%depotToolsDir%\python3_bin_reldir.txt" (
+  call "%depotToolsDir%\bootstrap\win_tools.bat"
+  if errorlevel 1 exit /b %errorlevel%
+)
+
 set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
 
 set "os=%RUNNER_OS%"
@@ -70,10 +78,17 @@ set "gnArgs=%gnArgs%cc_wrapper=""%ccWrapper%"" target_cpu=""%targetCpu%"" v8_tar
 
 pushd "%dir%\v8"
 
+rem Do not trust the exit code of the gn.bat wrapper alone: require fresh build files.
+if exist ".\out\release\build.ninja" del ".\out\release\build.ninja"
+
 call gn gen ".\out\release" --args="%gnArgs%"
 if errorlevel 1 (
   echo Failed to generate build files.
-  exit /b %errorlevel%
+  exit /b 1
+)
+if not exist ".\out\release\build.ninja" (
+  echo Failed to generate build files: build.ninja not found.
+  exit /b 1
 )
 
 echo ==================== Build args start ====================
@@ -84,7 +99,11 @@ echo ==================== Build args end ====================
 call ninja -C ".\out\release" -j %NUMBER_OF_PROCESSORS% d8
 if errorlevel 1 (
   echo Build failed.
-  exit /b %errorlevel%
+  exit /b 1
+)
+if not exist ".\out\release\d8.exe" (
+  echo Build failed: d8.exe not found.
+  exit /b 1
 )
 
 dir ".\out\release\"

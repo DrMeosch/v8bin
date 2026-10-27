@@ -6,7 +6,12 @@ on:
       - master
       - actions
     paths-ignore:
-      - "depot_tools"
+      - ".gitignore"
+      - ".gitpod*"
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
       - ".gitignore"
       - ".gitpod*"
 
@@ -14,8 +19,9 @@ jobs:
   build-test:
     name: Build V8
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-13, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-15-intel, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Code

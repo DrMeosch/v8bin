@@ -19,6 +19,13 @@ fi
 PATH="${depot_tools_dir}:$PATH"
 export PATH
 
+# Newer depot_tools wrappers (gn, ninja, ...) need the bundled Python that
+# ensure_bootstrap installs. gclient does not do it when DEPOT_TOOLS_UPDATE=0,
+# and v8/third_party/depot_tools is a separate, never-bootstrapped checkout.
+if [ ! -e "${depot_tools_dir}/python3_bin_reldir.txt" ]; then
+  DEPOT_TOOLS_UPDATE=0 "${depot_tools_dir}/ensure_bootstrap"
+fi
+
 os="$RUNNER_OS"
 
 if [ -z "$os" ]; then
