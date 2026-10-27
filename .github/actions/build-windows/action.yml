@@ -36,6 +36,25 @@ runs:
 
         Write-Output "SCCACHE_DIR=$sccacheDir" | Out-File -FilePath "$Env:GITHUB_ENV" -Encoding utf8
 
+    # Chromium's build/vs_toolchain.py hardcodes SDK_VERSION 10.0.28000.0 and
+    # fails when it is missing; the runner image only ships older SDKs.
+    - name: Setup Windows SDK
+      shell: pwsh
+      run: |
+        $sdkInclude = "${Env:ProgramFiles(x86)}\Windows Kits\10\Include\10.0.28000.0"
+
+        if (-not (Test-Path "$sdkInclude\um")) {
+          $vsPath = & "${Env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $installer = Start-Process -FilePath "${Env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe" `
+            -ArgumentList "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.Windows11SDK.28000 --quiet --norestart --noUpdateInstaller" `
+            -Wait -PassThru
+          Write-Output "VS installer exit code: $($installer.ExitCode)"
+        }
+
+        if (-not (Test-Path "$sdkInclude\um")) {
+          Write-Error "Windows SDK 10.0.28000.0 is not installed" -ErrorAction Stop
+        }
+
     - name: Download V8 Source
       shell: cmd
       run: .\v8_download.bat

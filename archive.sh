@@ -54,10 +54,15 @@ mkdir "$output_dir" || true
 #   "${dir}/gn-args_${os}.txt" \
 #   "$output_dir"
 
+# Fail instead of shipping a bogus archive when the build did not produce V8.
+test -f "${dir}/v8/out/release/d8" || { echo "d8 is missing from the build output"; exit 1; }
+ls "${dir}/v8/out/release"/libv8.* >/dev/null 2>&1 || { echo "libv8 is missing from the build output"; exit 1; }
+
 cp -vRP "${dir}/v8/out/release" "$output_dir"
 rm -rf "${output_dir}/gen"
 rm -rf "${output_dir}/obj"
 
 tar -Jcf "${dir}/${archive}" -C "$output_dir" .
+tar -Jtf "${dir}/${archive}" | grep -Eq "(^|/)libv8\.(so|dylib)$" || { echo "archive does not contain libv8"; exit 1; }
 
 ls -lh "${dir}/${archive}"
