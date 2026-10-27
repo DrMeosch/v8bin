@@ -54,7 +54,7 @@ mkdir "$output_dir" || true
 #   "${dir}/gn-args_${os}.txt" \
 #   "$output_dir"
 
-cp -vr "${dir}/v8/out/release" "$output_dir"
+cp -vRP "${dir}/v8/out/release" "$output_dir"
 rm -rf "${output_dir}/gen"
 rm -rf "${output_dir}/obj"
 
