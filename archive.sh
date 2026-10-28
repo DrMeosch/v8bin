@@ -62,7 +62,15 @@ cp -vRP "${dir}/v8/out/release" "$output_dir"
 rm -rf "${output_dir}/gen"
 rm -rf "${output_dir}/obj"
 
-tar -Jcf "${dir}/${archive}" -C "$output_dir" .
-tar -Jtf "${dir}/${archive}" | grep -Eq "(^|/)libv8\.(so|dylib)$" || { echo "archive does not contain libv8"; exit 1; }
+# Compress with all cores: tar -J is single-threaded (and macOS bsdtar ignores XZ_OPT),
+# which cost ~45 minutes per macOS job. A tar cut short by an error is caught by the listing below.
+if command -v xz >/dev/null 2>&1; then
+  tar -cf - -C "$output_dir" . | xz -T0 -c > "${dir}/${archive}"
+else
+  tar -Jcf "${dir}/${archive}" -C "$output_dir" .
+fi
+tar -Jtf "${dir}/${archive}" > "${dir}/${archive}.list"
+grep -Eq "(^|/)libv8\.(so|dylib)$" "${dir}/${archive}.list" || { echo "archive does not contain libv8"; exit 1; }
+rm -f "${dir}/${archive}.list"
 
 ls -lh "${dir}/${archive}"
