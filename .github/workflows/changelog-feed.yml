@@ -10,11 +10,6 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: changelog-feed
-  cancel-in-progress: false
-  queue: max
-
 jobs:
   append:
     name: Append to Changelog issue
