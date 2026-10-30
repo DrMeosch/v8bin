@@ -1,0 +1,39 @@
+name: Changelog Feed
+
+# Appends the Changelog lines of every merged PR to the pinned "Changelog" issue.
+# pull_request_target runs in the context of the base branch with a write-capable
+# token, so this workflow never checks out or executes PR code; the PR body is
+# only read through the API and handled as data.
+on:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] never checks out PR code; PR body is read as data
+    types: [closed]
+
+permissions: {}
+
+jobs:
+  append:
+    name: Append to Changelog issue
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Checkout scripts from the base branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          sparse-checkout: .github/workflows/scripts
+          persist-credentials: false
+
+      - name: Append entry
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          MERGED_AT: ${{ github.event.pull_request.merged_at }}
+          SERVER_URL: ${{ github.server_url }}
+        run: sh .github/workflows/scripts/post-changelog.sh
