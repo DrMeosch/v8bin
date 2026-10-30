@@ -1,0 +1,29 @@
+name: PR Changelog
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check changelog section
+    # Bot-authored PRs (renovate, dependabot, github-actions) are exempt.
+    if: >-
+      !contains(fromJSON('["renovate[bot]", "dependabot[bot]", "github-actions[bot]"]'), github.event.pull_request.user.login)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Test Changelog Check
+        run: sh .github/workflows/scripts/check-changelog_test.sh
+
+      - name: Check PR Body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: printf '%s' "$PR_BODY" | sh .github/workflows/scripts/check-changelog.sh
