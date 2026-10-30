@@ -38,7 +38,9 @@ if [ -z "$issue" ]; then
   fi
 fi
 
-if gh api --paginate "repos/$GH_REPO/issues/$issue/comments" --jq '.[].body' | grep -qF "$marker"; then
+# Only the bot's own comments count, and only their first line, so a stranger cannot forge a marker.
+if gh api --paginate "repos/$GH_REPO/issues/$issue/comments" \
+  --jq '.[] | select(.user.login == "github-actions[bot]") | .body | split("\n")[0]' | grep -qxF -- "$marker"; then
   echo "PR #$PR_NUMBER is already in issue #$issue, skipping."
   exit 0
 fi
