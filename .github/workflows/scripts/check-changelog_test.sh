@@ -39,6 +39,13 @@ expect 1 "comment-only placeholder" "## Changelog
 <!-- one or two lines
 or none -->
 "
+expect 1 "bare type prefix" "## Changelog
+- Added: "
+expect 1 "bare type prefix no colon" "## Changelog
+* Fixed"
+expect 0 "prefix with text" "## Changelog
+- Added: a thing"
+expect 1 "untouched template" "$(cat "$(dirname "$0")/../../pull_request_template.md")"
 expect 1 "heading only at end" "## Changelog"
 expect 1 "similar heading" "## Changelog notes
 text"

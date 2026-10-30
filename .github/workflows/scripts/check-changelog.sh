@@ -10,6 +10,9 @@ section="$(printf '%s\n' "$body" | awk '
   in_section { print }
 ')"
 
+# A bare type prefix such as "- Added:" with no text does not count.
+section="$(printf '%s\n' "$section" | grep -Eiv '^[-*[:space:]]*(added|changed|fixed|removed|security|deprecated)[[:space:]]*:?[[:space:]]*$')"
+
 if [ -z "$(printf '%s' "$section" | tr -d '[:space:]')" ]; then
   echo 'PR body needs a non-empty "## Changelog" section (use "none" for internal-only changes).' >&2
   exit 1
