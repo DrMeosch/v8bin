@@ -1,0 +1,63 @@
+name: Changelog Feed
+
+# Appends the Changelog lines of every merged PR to the pinned "Changelog" issue.
+# pull_request_target runs in the context of the base branch with a write-capable
+# token, so this workflow never checks out or executes PR code; the PR body is
+# only read through the API and handled as data.
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions: {}
+
+concurrency:
+  group: changelog-feed
+  cancel-in-progress: false
+
+jobs:
+  append:
+    name: Append to Changelog issue
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Checkout scripts from the base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          sparse-checkout: .github/workflows/scripts
+          persist-credentials: false
+
+      - name: Append entry
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          MERGED_AT: ${{ github.event.pull_request.merged_at }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -eu
+          body="$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER" --jq '.body // ""')"
+          entry="$(printf '%s' "$body" | sh .github/workflows/scripts/changelog-entry.sh \
+            "${MERGED_AT%%T*}" "$PR_URL" "$SERVER_URL/$GH_REPO/commit/$MERGE_SHA")"
+          if [ -z "$entry" ]; then
+            echo "No changelog lines in PR #$PR_NUMBER, skipping."
+            exit 0
+          fi
+
+          issue="$(gh issue list --state open --limit 100 --json number,title,author \
+            --jq '[.[] | select(.title == "Changelog" and .author.is_bot)][0].number // empty')"
+          if [ -z "$issue" ]; then
+            url="$(gh issue create --title Changelog \
+              --body 'Running log of the Changelog lines of merged pull requests, one comment per PR.')"
+            issue="${url##*/}"
+            # Pinning needs the GraphQL API and may be refused for this token; the log still works.
+            node_id="$(gh api "repos/$GH_REPO/issues/$issue" --jq .node_id)"
+            gh api graphql -f query='mutation($id: ID!) { pinIssue(input: {issueId: $id}) { issue { number } } }' \
+              -f id="$node_id" >/dev/null || echo "::warning::Could not pin issue #$issue; pin it manually."
+          fi
+          printf '%s\n' "$entry" | gh issue comment "$issue" --body-file -

@@ -80,3 +80,5 @@ The `v8_download`, `v8_compile` as well as other scripts may need to be modified
 ## Contributing
 
 Every pull request needs a `## Changelog` section in its description (the PR template includes it) with one or two user-facing lines, such as `Added: ...`, `Changed: ...`, `Fixed: ...`, `Removed: ...` or `Security: ...`. Write `none` for internal-only changes. The PR Changelog check fails when the section is missing or empty; bot-authored PRs are exempt.
+
+After a PR is merged, the Changelog Feed workflow appends its Changelog lines (with the date, PR link and merge-commit link) as a comment on the pinned "Changelog" issue, which it creates if missing. PRs whose section is `none` are skipped.
