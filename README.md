@@ -76,3 +76,7 @@ The `depot_tools` may require a specific version of `python`. You can find the r
 The `gclient`, `gn`, `ninja` and other tools may have different arguments or behaviors in the old versions.
 
 The `v8_download`, `v8_compile` as well as other scripts may need to be modified.
+
+## Contributing
+
+Every pull request needs a `## Changelog` section in its description (the PR template includes it) with one or two user-facing lines, such as `Added: ...`, `Changed: ...`, `Fixed: ...`, `Removed: ...` or `Security: ...`. Write `none` for internal-only changes. The PR Changelog check fails when the section is missing or empty; bot-authored PRs are exempt.
