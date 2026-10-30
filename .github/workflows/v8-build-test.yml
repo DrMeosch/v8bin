@@ -6,12 +6,18 @@ on:
       - master
       - actions
     paths-ignore:
+      - "**.md"
+      - "LICENSE*"
+      - ".github/pull_request_template.md"
       - ".gitignore"
       - ".gitpod*"
   pull_request:
     branches:
       - master
     paths-ignore:
+      - "**.md"
+      - "LICENSE*"
+      - ".github/pull_request_template.md"
       - ".gitignore"
       - ".gitpod*"
 
